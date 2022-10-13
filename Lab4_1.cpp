@@ -1,6 +1,4 @@
 #include <bits/stdc++.h>
-#include <fstream>
-#include <ctime>
 using namespace std;
 
 //===================================================Functions for Time==========================================================//
@@ -27,7 +25,7 @@ int countNoOfDays(int date1[], int date2[])
     dayCount2 += monthDays[date2[1]];
     dayCount2 += date2[0];
     dayCount2 += countLeapYearDays(date2);
-    return (abs(dayCount1 - dayCount2));
+    return (abs(dayCount1 - dayCount2 - 693991));
 }
 
 //================================Node class for linked list of Library-List=======================================//
@@ -72,8 +70,13 @@ public:
     void RequestRecords();
     void printRequestList();
     void insertNodeReqList(int numberOfCopies, string title, string author);
-    void Login();
-    void AfterLogin(string Username);
+    void Defaulters();
+    void IssuedBooks();
+    void Login(string Username);
+    void Login(string Username, string Password1);
+    void AfterLoginUser(string Username);
+    void AfterLoginAdmin(string Username);
+    void Student();
     void Signup();
 };
 
@@ -187,33 +190,10 @@ void Librarylist::LibraryRecords()
 
 void Librarylist::issueBook(string Username, string bookName, string authorName)
 {
-    //--------------------no consecutive issue of same books-----------------------------//
-    ifstream fin;
-    string Username2;
-    string bookName2;
-    fin.open("IssuedBooksData.txt");
-    while (!fin.eof())
-    {
-        getline(fin, Username2);
-        if (Username2 == Username)
-        {
-            fin >> ws;
-            getline(fin, bookName2);
-            if (bookName2 == bookName)
-            {
-                cout << "Sorry! consecutive issue of same book is not allowed." << endl;
-                return;
-            }
-        }
-    }
-
-    //----------------------------------------------issue a book-------------------------------------//
-
     Node *ptr = head;
     bool flag = false;
     while (ptr != NULL)
     {
-
         if (ptr->title == bookName && ptr->author == authorName)
         {
             flag = true;
@@ -232,12 +212,11 @@ void Librarylist::issueBook(string Username, string bookName, string authorName)
                 break;
             }
             else
-                cout << "Sorry! We are out of copies.\n"
-                     << endl;
+                cout << "Sorry! We are out of copies.\n." << endl;
         }
         ptr = ptr->next;
     }
-    //-----------------------------------------------send to request list----------------------------------------- //
+
     if (!flag)
     {
         ofstream fout;
@@ -289,13 +268,11 @@ void Librarylist::search(string username)
         }
         ptr = ptr->next;
     }
-    if (ptr == NULL)
-        cout << "Sorry we don't have this book." << endl;
 }
 
 void Librarylist::fine(int LateDays)
 {
-    cout << "You have to pay fine of Rs" << LateDays * 10 << "/- for " << LateDays << " days of late return.";
+    cout << "You have to pay fine of Rs." << LateDays * 10 << "/- for " << LateDays << " days of late return." << endl;
 }
 
 void Librarylist::returnBook(string Username)
@@ -311,16 +288,16 @@ void Librarylist::returnBook(string Username)
 
     ifstream fin;
     string Username2;
+    string bookName2;
     int day2, month2, year2;
     int dateReturn[3] = {ltm->tm_mday, ltm->tm_mon, ltm->tm_year};
     fin.open("IssuedBooksData.txt");
     while (!fin.eof())
     {
         getline(fin, Username2);
-        if (Username2 == Username)
+        getline(fin, bookName2);
+        if (Username2 == Username && bookName2 == bookName)
         {
-            fin >> ws;
-            fin >> ws;
             fin >> day2 >> ws;
             fin >> month2 >> ws;
             fin >> year2 >> ws;
@@ -339,6 +316,7 @@ void Librarylist::returnBook(string Username)
             ptr2->numberOfcopies--;
             ptr->numberOfcopies++;
             cout << "1 copy of " << bookName << " removed from request list." << endl;
+            cout << bookName << " by " << authorName << " returned." << endl;
             break;
         }
         ptr2 = ptr2->next;
@@ -358,20 +336,68 @@ void Librarylist::returnBook(string Username)
     }
 }
 
+void Librarylist::Defaulters()
+{
+    ifstream fin;
+    string Username;
+    string BookName;
+    int day2, month2, year2;
+    int dateReturn[3] = {ltm->tm_mday, ltm->tm_mon, ltm->tm_year};
+    fin.open("IssuedBooksData.txt");
+    bool flag = false;
+    while (!fin.eof())
+    {
+        getline(fin, Username);
+        getline(fin, BookName);
+        fin >> day2 >> ws;
+        fin >> month2 >> ws;
+        fin >> year2 >> ws;
+        int dateIssue[3] = {day2, month2, year2};
+        if (countNoOfDays(dateIssue, dateReturn) > 15)
+        {
+            flag = true;
+            int i = 1;
+            cout << i << "." << Username << " for book " << BookName << ", "
+                 << countNoOfDays(dateIssue, dateReturn) << " days passed since issue. " << endl;
+            i++;
+        }
+    }
+    if (!flag)
+        cout << "No defaulters." << endl;
+    fin.close();
+}
+
+void Librarylist::IssuedBooks()
+{
+    ifstream fin;
+    string BookName;
+    string Username;
+    int Day, Month, Year;
+    fin.open("IssuedBooksData.txt");
+    while (!fin.eof())
+    {
+        getline(fin, Username);
+        getline(fin, BookName);
+        fin >> Day >> ws;
+        fin >> Month >> ws;
+        fin >> Year >> ws;
+        cout << Username << " issued " << BookName << " book on " << Day << "/" << Month << "/" << Year << "." << endl;
+    }
+    fin.close();
+}
+
 //=======================================================login/signup===============================================//
 
-void Librarylist::Login()
+// Student
+void Librarylist::Login(string Username)
 {
     ifstream fin;
     ofstream fout;
     fin.open("Users.txt");
-    string Username;
     string Username2;
     string Password;
     string Password2;
-    cout << "Enter username\n>>";
-    cin >> Username;
-    cout << "Enter password\n>>";
+    cout << "Enter password\n >>";
     cin >> Password;
     bool flag = true;
     while (!fin.eof())
@@ -379,7 +405,7 @@ void Librarylist::Login()
         getline(fin, Username2);
         getline(fin, Password2);
         if (Username2 == Username && Password2 == Password)
-            AfterLogin(Username);
+            AfterLoginUser(Username);
         else
             flag = false;
     }
@@ -387,13 +413,74 @@ void Librarylist::Login()
         cout << "Incorrect useranme or password." << endl;
 }
 
-void Librarylist::AfterLogin(string Username)
+// Admin
+void Librarylist::Login(string Username, string Password1)
+{
+    ifstream fin;
+    ofstream fout;
+    fin.open("adminUsers.txt");
+    string Username2;
+    string Password2;
+    string Password1_check;
+    string Password2_check;
+    cout << "Enter password 2\n >>";
+    cin >> Password2;
+    bool flag = true;
+    while (!fin.eof())
+    {
+        fin >> Username2 >> ws;
+        fin >> Password1_check >> ws;
+        fin >> Password2_check >> ws;
+        if (Username2 == Username && Password1_check == Password1 && Password2_check == Password2)
+            AfterLoginAdmin(Username);
+        else
+            flag = false;
+    }
+    if (!flag)
+        cout << "Incorrect useranme or password." << endl;
+    fin.close();
+}
+
+void Librarylist::AfterLoginAdmin(string Username)
 {
     int choice;
-    // LibraryRecords();
     do
     {
-        cout << "\n1.Search\n2.Issue\n3.Reutrn\n4.See available books.\n5.See requested books.\n99.Exit\n>>";
+        cout << "\n1.Search.\n2.See available books.\n3.See requested books.\n4.Isseud books.\n5.Defaulters List.\n99.Exit\n>>";
+        cin >> choice;
+        switch (choice)
+        {
+        case 1:
+            search(Username);
+            break;
+            break;
+        case 2:
+            printLibList();
+            break;
+        case 3:
+            printRequestList();
+            break;
+        case 4:
+            IssuedBooks();
+            break;
+        case 5:
+            Defaulters();
+            break;
+        case 99:
+            break;
+        default:
+            cout << "Please enter valid data ! ";
+            break;
+        }
+    } while (choice != 99);
+}
+
+void Librarylist::AfterLoginUser(string Username)
+{
+    int choice;
+    do
+    {
+        cout << "\n1.Search\n2.Issue\n3.Reutrn.\n99.Exit\n>>";
         cin >> choice;
         switch (choice)
         {
@@ -417,16 +504,10 @@ void Librarylist::AfterLogin(string Username)
         case 3:
             returnBook(Username);
             break;
-        case 4:
-            printLibList();
-            break;
-        case 5:
-            printRequestList();
-            break;
         case 99:
             break;
         default:
-            cout << "PLease enter valid data ! ";
+            cout << "Please enter valid data ! ";
             break;
         }
     } while (choice != 99);
@@ -447,7 +528,7 @@ void Librarylist::Signup()
         if (Username2 == Username)
         {
             cout << "User alread exist!\n Redirecting to login page..." << endl;
-            Login();
+            Login(Username);
             return;
         }
     }
@@ -461,6 +542,35 @@ void Librarylist::Signup()
     fout.close();
 }
 
+void Librarylist::Student()
+{
+    int choice;
+    do
+    {
+        cout << "\n1.Login\n2.Signup\n99.Exit\n>>";
+        cin >> choice;
+        switch (choice)
+        {
+        case 1:
+        {
+            string Username;
+            cout << "Enter username\n>>";
+            cin >> Username;
+            Login(Username);
+        }
+        break;
+        case 2:
+            Signup();
+            break;
+        case 99:
+            break;
+        default:
+            cout << "Please enter valid data ! ";
+            break;
+        }
+    } while (choice != 99);
+}
+
 //=====================================================main function===============================================//
 
 int main()
@@ -470,16 +580,24 @@ int main()
     list.LibraryRecords();
     do
     {
-        cout << "\n1.Log in\n2.Sign up\n99.Exit\n>>";
+        cout << "\n1.Student\n2.Admin\n99.Exit\n>>";
         cin >> choice;
         switch (choice)
         {
         case 1:
-            list.Login();
+            list.Student();
             break;
         case 2:
-            list.Signup();
-            break;
+        {
+            string Username;
+            string Password1;
+            cout << "Enter username\n>>";
+            cin >> Username;
+            cout << "Enter password 1\n >>";
+            cin >> Password1;
+            list.Login(Username, Password1);
+        }
+        break;
         case 99:
             break;
         default:
