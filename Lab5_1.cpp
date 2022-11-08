@@ -28,7 +28,7 @@ int countNoOfDays(int date1[], int date2[])
     return (abs(dayCount1 - dayCount2 - 693991));
 }
 
-//================================Node class for linked list of Library-List=======================================//
+//================================Node class for linked Object of Library-Object=======================================//
 
 class Node
 {
@@ -46,7 +46,7 @@ public:
     }
 };
 
-//====================================Linked list for Library-List================================================//
+//====================================Linked Object for Library-Object================================================//
 
 class Librarylist
 {
@@ -80,7 +80,7 @@ public:
     void Signup();
 };
 
-//=========================================Request List functions================================================//
+//=========================================Request Object functions================================================//
 
 void Librarylist::RequestRecords()
 {
@@ -106,7 +106,7 @@ void Librarylist::printRequestList()
 
     if (head2 == NULL)
     {
-        cout << "List empty" << endl;
+        cout << "Object empty" << endl;
         return;
     }
     while (temp != NULL)
@@ -134,7 +134,7 @@ void Librarylist::insertNodeReqList(int numberOfCopies, string title, string aut
     temp->next = newNode;
 }
 
-//=========================================Library List functions================================================//
+//=========================================Library Object functions================================================//
 
 void Librarylist::insertNodeLibList(int numberOfCopies, string title, string author)
 {
@@ -149,26 +149,6 @@ void Librarylist::insertNodeLibList(int numberOfCopies, string title, string aut
         temp = temp->next;
 
     temp->next = newNode;
-}
-
-void Librarylist::printLibList()
-{
-    Node *temp = head;
-
-    if (head == NULL)
-    {
-        cout << "List empty" << endl;
-        return;
-    }
-    while (temp != NULL)
-    {
-        cout << "TITLE - " << temp->title << "\t"
-             << "AUTHOR - " << temp->author << "\t"
-             << "# OF COPIES - " << temp->numberOfcopies << "\t"
-             << endl;
-        temp = temp->next;
-    }
-    cout << "\n";
 }
 
 void Librarylist::LibraryRecords()
@@ -186,6 +166,26 @@ void Librarylist::LibraryRecords()
         insertNodeLibList(numberOfCopies, title, author);
     }
     fin.close();
+}
+
+void Librarylist::printLibList()
+{
+    Node *temp = head;
+
+    if (head == NULL)
+    {
+        cout << "Object empty" << endl;
+        return;
+    }
+    while (temp != NULL)
+    {
+        cout << "TITLE - " << temp->title << "\t"
+             << "AUTHOR - " << temp->author << "\t"
+             << "# OF COPIES - " << temp->numberOfcopies << "\t"
+             << endl;
+        temp = temp->next;
+    }
+    cout << "\n";
 }
 
 void Librarylist::issueBook(string Username, string bookName, string authorName)
@@ -227,7 +227,7 @@ void Librarylist::issueBook(string Username, string bookName, string authorName)
         fout << 1 << "\n";
         fout.close();
         cout << "\nBook not found in records...\n"
-             << bookName << " book added in request list." << endl;
+             << bookName << " book added in request Object." << endl;
     }
 }
 
@@ -315,7 +315,7 @@ void Librarylist::returnBook(string Username)
         {
             ptr2->numberOfcopies--;
             ptr->numberOfcopies++;
-            cout << "1 copy of " << bookName << " removed from request list." << endl;
+            cout << "1 copy of " << bookName << " removed from request Object." << endl;
             cout << bookName << " by " << authorName << " returned." << endl;
             break;
         }
@@ -345,6 +345,7 @@ void Librarylist::Defaulters()
     int dateReturn[3] = {ltm->tm_mday, ltm->tm_mon, ltm->tm_year};
     fin.open("IssuedBooksData.txt");
     bool flag = false;
+    int i = 1;
     while (!fin.eof())
     {
         getline(fin, Username);
@@ -356,7 +357,6 @@ void Librarylist::Defaulters()
         if (countNoOfDays(dateIssue, dateReturn) > 15)
         {
             flag = true;
-            int i = 1;
             cout << i << "." << Username << " for book " << BookName << ", "
                  << countNoOfDays(dateIssue, dateReturn) << " days passed since issue. " << endl;
             i++;
@@ -446,13 +446,12 @@ void Librarylist::AfterLoginAdmin(string Username)
     int choice;
     do
     {
-        cout << "\n1.Search.\n2.See available books.\n3.See requested books.\n4.Isseud books.\n5.Defaulters List.\n99.Exit\n>>";
+        cout << "\n1.Search.\n2.See available books.\n3.See requested books.\n4.Isseud books.\n5.Add books in Library.\n6.Defaulters list.\n99.Exit\n>>";
         cin >> choice;
         switch (choice)
         {
         case 1:
             search(Username);
-            break;
             break;
         case 2:
             printLibList();
@@ -464,6 +463,25 @@ void Librarylist::AfterLoginAdmin(string Username)
             IssuedBooks();
             break;
         case 5:
+        {
+            int numberOfCopies;
+            string title, author;
+            cout << "\nEnter the book name to add to the library\n>>";
+            cin >> title;
+            cout << "\nEnter the book name to add to the library\n>>";
+            cin >> author;
+            cout << "\nEnter the book name to add to the library\n>>";
+            cin >> numberOfCopies;
+            ofstream fout;
+            fout.open("BooksData.txt", ios::app);
+            fout << title << endl;
+            fout << author << endl;
+            fout << numberOfCopies << endl;
+            fout.close();
+            cout << "Book added in the Library..." << endl;
+        }
+        break;
+        case 6:
             Defaulters();
             break;
         case 99:
@@ -575,9 +593,9 @@ void Librarylist::Student()
 
 int main()
 {
-    Librarylist list;
+    Librarylist Object;
     int choice;
-    list.LibraryRecords();
+    Object.LibraryRecords();
     do
     {
         cout << "\n1.Student\n2.Admin\n99.Exit\n>>";
@@ -585,7 +603,7 @@ int main()
         switch (choice)
         {
         case 1:
-            list.Student();
+            Object.Student();
             break;
         case 2:
         {
@@ -595,7 +613,7 @@ int main()
             cin >> Username;
             cout << "Enter password 1\n >>";
             cin >> Password1;
-            list.Login(Username, Password1);
+            Object.Login(Username, Password1);
         }
         break;
         case 99:
