@@ -1,6 +1,34 @@
 #include <bits/stdc++.h>
 #include <fstream>
+#include <ctime>
 using namespace std;
+
+//===================================================Functions for Time==========================================================//
+
+time_t now = time(0);
+tm *ltm = localtime(&now);
+
+const int monthDays[12] = {31, 59, 90, 120, 151, 181, 212, 243,
+                           273, 304, 334, 365};
+int countLeapYearDays(int d[])
+{
+    int years = d[2];
+    if (d[1] <= 2)
+        years--;
+    return ((years / 4) - (years / 100) + (years / 400));
+}
+int countNoOfDays(int date1[], int date2[])
+{
+    long int dayCount1 = (date1[2] * 365);
+    dayCount1 += monthDays[date1[1]];
+    dayCount1 += date1[0];
+    dayCount1 += countLeapYearDays(date1);
+    long int dayCount2 = (date2[2] * 365);
+    dayCount2 += monthDays[date2[1]];
+    dayCount2 += date2[0];
+    dayCount2 += countLeapYearDays(date2);
+    return (abs(dayCount1 - dayCount2));
+}
 
 //================================Node class for linked list of Library-List=======================================//
 
@@ -39,8 +67,9 @@ public:
     void LibraryRecords();
     void issueBook(string Username, string bookName, string authorName);
     void search(string username);
-    void returnBook();
-    void RequestRecords(int numberOfCopies, string title, string author);
+    void fine(int);
+    void returnBook(string Username);
+    void RequestRecords();
     void printRequestList();
     void insertNodeReqList(int numberOfCopies, string title, string author);
     void Login();
@@ -50,24 +79,26 @@ public:
 
 //=========================================Request List functions================================================//
 
-void Librarylist::RequestRecords(int numberOfCopies, string title, string author)
+void Librarylist::RequestRecords()
 {
-    Node *ptr = head2;
-    while (ptr != NULL)
+    ifstream fin;
+    string title;
+    string author;
+    int numberOfCopies;
+    fin.open("RequestedBooksData.txt");
+    while (!fin.eof())
     {
-        if (ptr->title == title)
-        {
-            ptr->numberOfcopies++;
-            break;
-        }
-        ptr = ptr->next;
-    }
-    if (ptr == NULL)
+        getline(fin >> ws, title);
+        getline(fin >> ws, author);
+        fin >> numberOfCopies;
         insertNodeReqList(numberOfCopies, title, author);
+    }
+    fin.close();
 }
 
 void Librarylist::printRequestList()
 {
+    RequestRecords();
     Node *temp = head2;
 
     if (head2 == NULL)
@@ -97,7 +128,6 @@ void Librarylist::insertNodeReqList(int numberOfCopies, string title, string aut
     Node *temp = head2;
     while (temp->next != NULL)
         temp = temp->next;
-
     temp->next = newNode;
 }
 
@@ -147,9 +177,9 @@ void Librarylist::LibraryRecords()
     fin.open("BooksData.txt");
     while (!fin.eof())
     {
-        getline(fin, title);
-        getline(fin, author);
-        fin>> numberOfCopies;
+        getline(fin >> ws, title);
+        getline(fin >> ws, author);
+        fin >> numberOfCopies;
         insertNodeLibList(numberOfCopies, title, author);
     }
     fin.close();
@@ -157,10 +187,33 @@ void Librarylist::LibraryRecords()
 
 void Librarylist::issueBook(string Username, string bookName, string authorName)
 {
+    //--------------------no consecutive issue of same books-----------------------------//
+    ifstream fin;
+    string Username2;
+    string bookName2;
+    fin.open("IssuedBooksData.txt");
+    while (!fin.eof())
+    {
+        getline(fin, Username2);
+        if (Username2 == Username)
+        {
+            fin >> ws;
+            getline(fin, bookName2);
+            if (bookName2 == bookName)
+            {
+                cout << "Sorry! consecutive issue of same book is not allowed." << endl;
+                return;
+            }
+        }
+    }
+
+    //----------------------------------------------issue a book-------------------------------------//
+
     Node *ptr = head;
     bool flag = false;
     while (ptr != NULL)
     {
+
         if (ptr->title == bookName && ptr->author == authorName)
         {
             flag = true;
@@ -169,21 +222,31 @@ void Librarylist::issueBook(string Username, string bookName, string authorName)
                 cout << bookName << " by " << authorName << " issue successfull !" << endl;
                 ptr->numberOfcopies--;
                 ofstream fout;
-                fout.open("IssuedBooksData.txt");
-                fout << Username;
-                fout << ptr->title;
+                fout.open("IssuedBooksData.txt", ios::app);
+                fout << Username << endl;
+                fout << ptr->title << endl;
+                fout << ltm->tm_mday << endl;
+                fout << 1 + ltm->tm_mon << endl;
+                fout << 1900 + ltm->tm_year << endl;
                 fout.close();
                 break;
             }
             else
-                cout << "Sorry! We are out of copies.\n." << endl;
+                cout << "Sorry! We are out of copies.\n"
+                     << endl;
         }
         ptr = ptr->next;
     }
-
+    //-----------------------------------------------send to request list----------------------------------------- //
     if (!flag)
     {
-        RequestRecords(1, bookName, authorName);
+        ofstream fout;
+        fout.open("RequestedBooksData.txt");
+        // fout << Username << "\n";
+        fout << bookName << "\n";
+        fout << authorName << "\n";
+        fout << 1 << "\n";
+        fout.close();
         cout << "\nBook not found in records...\n"
              << bookName << " book added in request list." << endl;
     }
@@ -226,9 +289,16 @@ void Librarylist::search(string username)
         }
         ptr = ptr->next;
     }
+    if (ptr == NULL)
+        cout << "Sorry we don't have this book." << endl;
 }
 
-void Librarylist::returnBook()
+void Librarylist::fine(int LateDays)
+{
+    cout << "You have to pay fine of Rs" << LateDays * 10 << "/- for " << LateDays << " days of late return.";
+}
+
+void Librarylist::returnBook(string Username)
 {
     cout << "Type the title of book: " << endl;
     cout << ">>";
@@ -238,6 +308,27 @@ void Librarylist::returnBook()
     cout << ">>";
     string authorName;
     cin >> authorName;
+
+    ifstream fin;
+    string Username2;
+    int day2, month2, year2;
+    int dateReturn[3] = {ltm->tm_mday, ltm->tm_mon, ltm->tm_year};
+    fin.open("IssuedBooksData.txt");
+    while (!fin.eof())
+    {
+        getline(fin, Username2);
+        if (Username2 == Username)
+        {
+            fin >> ws;
+            fin >> ws;
+            fin >> day2 >> ws;
+            fin >> month2 >> ws;
+            fin >> year2 >> ws;
+            int dateIssue[3] = {day2, month2, year2};
+            if (countNoOfDays(dateIssue, dateReturn) > 15)
+                fine(countNoOfDays(dateIssue, dateReturn));
+        }
+    }
 
     Node *ptr = head;
     Node *ptr2 = head2;
@@ -282,14 +373,18 @@ void Librarylist::Login()
     cin >> Username;
     cout << "Enter password\n>>";
     cin >> Password;
+    bool flag = true;
     while (!fin.eof())
     {
         getline(fin, Username2);
         getline(fin, Password2);
         if (Username2 == Username && Password2 == Password)
             AfterLogin(Username);
+        else
+            flag = false;
     }
-    cout << "Incorrect useranme or password." << endl;
+    if (!flag)
+        cout << "Incorrect useranme or password." << endl;
 }
 
 void Librarylist::AfterLogin(string Username)
@@ -320,7 +415,7 @@ void Librarylist::AfterLogin(string Username)
         }
         break;
         case 3:
-            returnBook();
+            returnBook(Username);
             break;
         case 4:
             printLibList();
@@ -360,9 +455,9 @@ void Librarylist::Signup()
     cin >> Password;
     fin.close();
     ofstream fout;
-    fout.open("Users.txt");
+    fout.open("Users.txt", ios::app);
     fout << Username << endl;
-    fout << Password;
+    fout << Password << endl;
     fout.close();
 }
 
