@@ -446,7 +446,11 @@ void Librarylist::AfterLoginAdmin(string Username)
     int choice;
     do
     {
+
         cout << "\n1.Search.\n2.See available books.\n3.See requested books.\n4.Isseud books.\n5.Defaulters List.\n6.Add books in Library.\n99.Exit\n>>";
+        
+        cout << "\n1.Search.\n2.See available books.\n3.See requested books.\n4.Isseud books.\n5.Defaulters List.\n99.Exit\n>>";
+
         cin >> choice;
         switch (choice)
         {
@@ -466,6 +470,7 @@ void Librarylist::AfterLoginAdmin(string Username)
         case 5:
             Defaulters();
             break;
+
         case 6:
         {
             int numberOfCopies;
